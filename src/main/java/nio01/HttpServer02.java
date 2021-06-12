@@ -7,8 +7,10 @@ import java.net.Socket;
 
 public class HttpServer02 {
 
+    public static final int PORT = 8082;
+
     public static void main(String[] args) throws IOException {
-        var serverSocket = new ServerSocket(8082);
+        var serverSocket = new ServerSocket(PORT);
         while (true) {
             try {
                 System.out.println("before accept");
@@ -30,7 +32,7 @@ public class HttpServer02 {
             var printWriter = new PrintWriter(aSocket.getOutputStream(), true);
             printWriter.println("HTTP/1.1 200 OK");
             printWriter.println("Content-Type:text/html;charset=utf-8");
-            String body = "<h2>hello world</h2>";
+            String body = "hello " + PORT;
             printWriter.println("Content-Length: " + body.getBytes().length);
             printWriter.println();
             printWriter.write(body);
