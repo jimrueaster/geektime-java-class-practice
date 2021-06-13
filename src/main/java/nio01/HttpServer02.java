@@ -15,12 +15,13 @@ public class HttpServer02 {
             try {
                 System.out.println("before accept");
                 var socket = serverSocket.accept();
+                Util.printRequest(socket);
                 System.out.println("after accept");
                 new Thread(
                         () -> service(socket)
                 ).start();
                 System.out.println("after service socket");
-            } catch (IOException aException) {
+            } catch (IOException | InterruptedException aException) {
                 aException.printStackTrace();
             }
         }

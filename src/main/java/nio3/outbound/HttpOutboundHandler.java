@@ -28,13 +28,14 @@ import java.util.stream.Collectors;
 
 public class HttpOutboundHandler {
 
-    HttpResponseFilter filter = new HeaderHttpResponseFilter();
-    HttpEndpointRouter router = new RandomHttpEndpointRouter();
     private final CloseableHttpAsyncClient httpAsyncClient;
     private final ExecutorService proxyService;
     private final List<String> backendUrls;
+    HttpResponseFilter responseFilter = new HeaderHttpResponseFilter();
+    HttpEndpointRouter router = new RandomHttpEndpointRouter();
 
     public HttpOutboundHandler(List<String> aBackendUrls) {
+        System.out.println("http outbound handler");
         backendUrls = aBackendUrls.stream().map(this::formatUrl)
                 .collect(Collectors.toList());
 
@@ -68,10 +69,18 @@ public class HttpOutboundHandler {
 
     public void handle(final FullHttpRequest aFullHttpRequest, final ChannelHandlerContext ctx,
                        HttpRequestFilter aFilter) {
+        System.out.println("handle outbound start");
+
+        System.out.println("get a route url");
         var backendUrl = router.route(this.backendUrls);
+
+        System.out.println("full request uri:" + aFullHttpRequest.uri());
         final String url = backendUrl + aFullHttpRequest.uri();
 
+        System.out.println("request filter, will header will add 'mao'");
         aFilter.filter(aFullHttpRequest, ctx);
+
+        System.out.println("fetch Get");
         proxyService.submit(() -> fetchGet(aFullHttpRequest, ctx, url));
     }
 
@@ -79,11 +88,14 @@ public class HttpOutboundHandler {
                           final String url) {
         final HttpGet httpGet = new HttpGet(url);
         httpGet.setHeader(HTTP.CONN_DIRECTIVE, HTTP.CONN_KEEP_ALIVE);
-        httpGet.setHeader("mao", inbound.headers().get("mao"));
 
-        httpAsyncClient.execute(httpGet, new FutureCallback<HttpResponse>() {
+        String headerMaoField = inbound.headers().get("mao");
+        httpGet.setHeader("mao", headerMaoField);
+
+        httpAsyncClient.execute(httpGet, new FutureCallback<>() {
             @Override
             public void completed(HttpResponse endpointResponse) {
+                System.out.println("fetch Get complete");
                 try {
                     handleResponse(inbound, ctx, endpointResponse);
                 } catch (Exception aException) {
@@ -95,12 +107,14 @@ public class HttpOutboundHandler {
 
             @Override
             public void failed(Exception aE) {
+                System.out.println("fetch Get failed");
                 httpGet.abort();
                 aE.printStackTrace();
             }
 
             @Override
             public void cancelled() {
+                System.out.println("fetch Get cancelled");
                 httpGet.abort();
             }
         });
@@ -119,7 +133,7 @@ public class HttpOutboundHandler {
             response.headers().setInt("Content-Length",
                     Integer.parseInt(endpointResponse.getFirstHeader("Content-Length").getValue()));
 
-            filter.filter(response);
+            responseFilter.filter(response);
         } catch (IOException aException) {
             aException.printStackTrace();
 

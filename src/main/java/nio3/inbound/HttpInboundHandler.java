@@ -14,17 +14,19 @@ public class HttpInboundHandler extends ChannelInboundHandlerAdapter {
 
     private final List<String> proxyServer;
 
-    private final HttpOutboundHandler handler;
+    private final HttpOutboundHandler outboundHandler;
 
     private final HttpRequestFilter filter = new HeaderHttpRequestFilter();
 
     public HttpInboundHandler(List<String> aProxyServer) {
+        System.out.println("construct http inbound handler");
         proxyServer = aProxyServer;
-        handler = new HttpOutboundHandler(proxyServer);
+        outboundHandler = new HttpOutboundHandler(proxyServer);
     }
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("channel read complete");
         ctx.flush();
     }
 
@@ -33,11 +35,22 @@ public class HttpInboundHandler extends ChannelInboundHandlerAdapter {
         try {
             var fullRequest = (FullHttpRequest) msg;
 
-            handler.handle(fullRequest, ctx, filter);
+            System.out.println("outbound handler");
+            outboundHandler.handle(fullRequest, ctx, filter);
         } catch (Exception aException) {
             aException.printStackTrace();
         } finally {
             ReferenceCountUtil.release(msg);
+        }
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        cause.printStackTrace();
+        var channel = ctx.channel();
+        if(channel.isActive()){
+
+            ctx.close();
         }
     }
 }
