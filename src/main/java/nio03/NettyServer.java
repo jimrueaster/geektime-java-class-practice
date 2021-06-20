@@ -1,4 +1,4 @@
-package nio3;
+package nio03;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -8,7 +8,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import nio3.inbound.HttpInboundInitializer;
+import nio03.inbound.HttpInboundInitializer;
 
 import java.util.Arrays;
 
